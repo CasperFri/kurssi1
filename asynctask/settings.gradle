@@ -1,0 +1,2 @@
+rootProject.name='asynctask'
+include ':app'
