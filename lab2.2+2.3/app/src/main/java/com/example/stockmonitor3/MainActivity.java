@@ -35,40 +35,60 @@ import java.util.Iterator;
 
 
 public class MainActivity extends AppCompatActivity {
-    Button button;
-    ListView listView;
-    EditText editText;
-    EditText editText2;
-    String stockID = "";
-    String stockName = "";
-    Toast AddID;
+    Button nappi;
+    ListView stockList;
+    EditText idEdit;
+    EditText nameEdit;
+    String stockIDString;
+    double newStock;
+    String stockNameString;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        button = findViewById(R.id.btnHit);
-        listView = findViewById(R.id.user_list);
-        editText = findViewById(R.id.editText);
-        editText2 = findViewById(R.id.editText2);
-        AddID.makeText(MainActivity.this, "ADD VALUES", Toast.LENGTH_SHORT).show();
-
-
+        nappi = findViewById(R.id.btnHit);
+        stockList = findViewById(R.id.user_list);
+        idEdit= findViewById(R.id.editText);
+        nameEdit = findViewById(R.id.editText2);
 
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-
-
-        //final String url = loadFromWeb("https://financialmodelingprep.com/api/company/price/AAPL,INTC,IBM,GOOGL,FB,NOK,RHT,MSFT,AMZN,BRK-B,BABA,JNJ,JPM,XOM,BAC,WMT,WFC,RDS-B,V,PG,BUD,T,TWX,CVX,UNH,PFE,CHL,HD,TSM,VZ,ORCL,C,NVS?datatype=json");
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, "https://financialmodelingprep.com/api/company/price/AAPL,INTC,IBM,GOOGL,FB,NOK,RHT,MSFT,AMZN,BRK-B,BABA,JNJ,JPM,XOM,BAC,WMT,WFC,RDS-B,V,PG,BUD,T,TWX,CVX,UNH,PFE,CHL,HD,TSM,VZ,ORCL,C,NVS?datatype=json",
                 new Response.Listener<String>() {
                     @Override
-                    public void onResponse(String response) {
+                    public void onResponse(final String response) {
                         final ArrayList<String> stockDatas = parseStockData(response);
 
                         final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, stockDatas);
-                        listView.setAdapter(arrayAdapter);
+                        stockList.setAdapter(arrayAdapter);
+                        nappi.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+
+                                stockNameString = nameEdit.getText().toString();
+                                stockIDString = idEdit.getText().toString();
+                                newStock = parseStockDataUser(response);
+                                if (nameEdit.getText().toString().trim().equals("")) {
+                                    Toast.makeText(MainActivity.this, "ADD STOCK NAME", Toast.LENGTH_SHORT).show();
+                                } else if (idEdit.getText().toString().trim().equals("")) {
+                                    Toast.makeText(MainActivity.this, "ADD STOCK ID", Toast.LENGTH_SHORT).show();
+                                }
+
+
+                                for (int i = 0; i < parseStockDataUser(response); i++) {
+                                    if (idEdit.getText().toString().equals(stockIDString)) {
+                                        Toast.makeText(MainActivity.this, "STOCK " + stockNameString + " ADDED SUCCESFULLY", Toast.LENGTH_SHORT).show();
+                                        stockDatas.add(stockNameString + " " + newStock);
+                                        break;
+                                    }
+                                    else {
+                                        Toast.makeText(MainActivity.this, "STOCK NOT FOUND", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            }
+                        });
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -81,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
+
     }
 
 
@@ -89,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
         private ArrayList<String> parseStockData(String response) {
             ArrayList<String> stockDatas = new ArrayList<>();
             try {
+
                 JSONObject jsonObject = new JSONObject(response);
                 Iterator<String> it = jsonObject.keys();
                 int i = 0;
@@ -106,16 +129,15 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e){e.printStackTrace();} return stockDatas;
         }
 
-        public String loadFromWeb(String urlString) {
-            try {
-                URL url = new URL(urlString);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                InputStream in = new BufferedInputStream(connection.getInputStream());
-                String htmlText = Utilities.fromStream(in);
-                return htmlText;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
+    private double parseStockDataUser(String response){
+        double newStock = 0;
+        try{
+            JSONObject jsonObject2 = new JSONObject(response);
+            JSONObject added = jsonObject2.getJSONObject(stockIDString);
+            newStock = added.getDouble("price");
+        }   catch (JSONException e) {
+            e.printStackTrace();
+        }   return newStock;
+    }
+
 }
